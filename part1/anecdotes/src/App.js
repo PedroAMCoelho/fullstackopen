@@ -20,6 +20,8 @@ const App = () => {
   const [selected, setSelected] = useState(0);
   const currentAnecdote = anecdotes[selected];
 
+  const getMostVotedAnecdote = () => anecdotes.reduce((max, cur)=>(max.votes > cur.votes ? max:cur));
+
   const onVote = () => {
     let newAnecdote = {...currentAnecdote, votes: currentAnecdote.votes + 1};
     let newAnecdotes = [
@@ -44,11 +46,15 @@ const App = () => {
   }
 
   return (    
-    <div>      
+    <div>
+      <h2>Anecdote of the day</h2>
       <p>{currentAnecdote.text}</p>
       <p>has {currentAnecdote.votes} votes</p>
       <Button text="vote" handleClick={onVote} />
       <Button text="next anecdote" handleClick={onClick} />
+      <h2>Anecdote with most votes</h2>
+      <p>{getMostVotedAnecdote().text}</p>
+      <p>has {getMostVotedAnecdote().votes} votes</p>
     </div>
   )
 }
