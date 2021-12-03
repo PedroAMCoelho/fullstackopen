@@ -5,16 +5,24 @@ const App = () => {
   const [newName, setNewName] = useState("");
 
   const handleNameChange = (event) => {
-    console.log(event.target.value)
-    setNewName(event.target.value)
-  }
+    console.log(event.target.value);
+    setNewName(event.target.value);
+  };
 
   const addName = (event) => {
     event.preventDefault();
-    setPersons([...persons, { id: persons.length + 1, name: getFormInputValue(event.target) }]);
-  }
+    
+    if (isValidNewPerson(newName))
+      setPersons([...persons, { id: persons.length + 1, name: newName }]);
+    else
+      invalidPersonAlert(newName);
+  };
 
-  const getFormInputValue = (formData) => formData.querySelectorAll('input')[0].value;
+  const invalidPersonAlert = (newPersonName) => 
+    window.alert(`${newPersonName} is already added to phonebook`);
+
+  const isValidNewPerson = (personName) =>
+    !(persons.some(x => x.name === personName));
 
   return (
     <div>
@@ -28,7 +36,7 @@ const App = () => {
         </div>
       </form>
       <h2>Numbers</h2>
-      {persons && persons.map(x => <p key={x.id}>{x.name}</p>)}
+      {persons && persons.map((x) => <p key={x.id}>{x.name}</p>)}
     </div>
   );
 };
