@@ -21,25 +21,28 @@ const App = () => {
   const handleNameChange = (event) => setNewName(event.target.value);  
 
   const addPerson = (event) => {
-    if (isValidNewPerson(newName)){
-        let newPerson = { name: newName, number: newPhoneNumber };
-
-        personService
-        .create(newPerson)
-        .then(response => {
-          setPersons(persons.concat(response));
-          setNewName('');
-          setNewPhoneNumber('');
-        });
-      }
-    else {
-      invalidPersonAlert(newName);
+    if (isExistingPerson(newName) && hasConfirmedNumberUpdate(newName)) {
+      let person = persons.find(p => p.name === newName);
+      let personToUpdate = { ...person, number: newPhoneNumber };
+      personService.update(personToUpdate.id, personToUpdate).then((updatedPerson) => {
+        let updatedPersonList = persons.map(p => p.id === updatedPerson.id ? updatedPerson : p);
+        setPersons(updatedPersonList);
+        setNewName("");
+        setNewPhoneNumber("");
+      });
+    } else {
+      let newPerson = { name: newName, number: newPhoneNumber };
+      personService.create(newPerson).then((response) => {
+        setPersons(persons.concat(response));
+        setNewName("");
+        setNewPhoneNumber("");
+      });
     }
   };
 
-  const invalidPersonAlert = (newPersonName) => window.alert(`${newPersonName} is already added to phonebook`);
+  const hasConfirmedNumberUpdate = (newPersonName) => window.confirm(`${newPersonName} is already added to phonebook, replace the old number with a new one?`);
 
-  const isValidNewPerson = (personName) => !persons.some(x => x.name === personName);
+  const isExistingPerson = (personName) => persons.some(x => x.name === personName);
 
   const onDelete = (person) => {
     if(window.confirm(`Delete ${person.name} ?`)){
