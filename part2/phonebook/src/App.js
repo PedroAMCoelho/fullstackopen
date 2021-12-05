@@ -41,6 +41,16 @@ const App = () => {
 
   const isValidNewPerson = (personName) => !persons.some(x => x.name === personName);
 
+  const onDelete = (person) => {
+    if(window.confirm(`Delete ${person.name} ?`)){
+      personService
+        .remove(person.id)
+        .then(response => {
+          setPersons(persons.filter(n => n.id !== person.id));
+        });
+    }
+  } 
+
   return (
     <>
       <h2>Phonebook</h2>
@@ -60,6 +70,7 @@ const App = () => {
       <PersonsDataTable
         persons={persons}
         filter={filter}
+        onDelete={onDelete}
       />
     </>
   );
