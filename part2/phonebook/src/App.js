@@ -10,7 +10,8 @@ const App = () => {
   const [newName, setNewName] = useState("");
   const [newPhoneNumber, setNewPhoneNumber] = useState(null);
   const [filter, setFilter] = useState("");
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [notificationMessage, setNotificationMessage] = useState(null);
+  const [notificationType, setNotificationType] = useState(null);
 
   useEffect(() => {
     personService.getAll().then(response => setPersons(response));
@@ -26,28 +27,36 @@ const App = () => {
     if (isExistingPerson(newName) && hasConfirmedNumberUpdate(newName)) {
       let person = persons.find(p => p.name === newName);
       let personToUpdate = { ...person, number: newPhoneNumber };
-      personService.update(personToUpdate.id, personToUpdate).then((updatedPerson) => {
+      personService
+      .update(personToUpdate.id, personToUpdate)
+      .then((updatedPerson) => {
         let updatedPersonList = persons.map(p => p.id === updatedPerson.id ? updatedPerson : p);
         setPersons(updatedPersonList);
-        setNewName("");
-        setNewPhoneNumber("");
-        setSuccessMessage(`Updated ${updatedPerson.name}`);
-        setTimeout(() => {
-          setSuccessMessage(null);
-        }, 5000)
+        showPersonNotification("success", `Updated ${updatedPerson.name}`);
+      })
+      .catch(error => {
+        setPersons(persons.filter(p => p.id !== personToUpdate.id));
+        showPersonNotification("error", `Person '${personToUpdate.name}' was already removed from server`);
       });
     } else {
       let newPerson = { name: newName, number: newPhoneNumber };
       personService.create(newPerson).then((response) => {
         setPersons(persons.concat(response));
-        setNewName("");
-        setNewPhoneNumber("");
-        setSuccessMessage(`Added ${response.name}`);
-        setTimeout(() => {
-          setSuccessMessage(null);
-        }, 5000)
+        showPersonNotification("success", `Added ${response.name}`);
       });
     }
+
+    setNewName("");
+    setNewPhoneNumber("");
+  };
+
+  const showPersonNotification = (type, message) => {
+    setNotificationMessage(message);
+    setNotificationType(type);
+    setTimeout(() => {
+      setNotificationMessage(null);
+      setNotificationType(null);
+    }, 5000);
   };
 
   const hasConfirmedNumberUpdate = (newPersonName) => window.confirm(`${newPersonName} is already added to phonebook, replace the old number with a new one?`);
@@ -67,7 +76,7 @@ const App = () => {
   return (
     <>
       <h2>Phonebook</h2>
-      <Notification message={successMessage} />
+      <Notification message={notificationMessage} type={notificationType} />
       <Filter 
         title={"filter shown with"} 
         onChange={handleFilterChange} 
