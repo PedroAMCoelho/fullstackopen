@@ -4,58 +4,60 @@ import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import PersonsDataTable from './components/PersonsDataTable';
 import Notification from './components/Notification';
+import NotificationTypeEnum from './enums/NotificationTypeEnum';
 
 const App = () => {
   const [persons, setPersons] = useState([]);
-  const [newName, setNewName] = useState("");
-  const [newPhoneNumber, setNewPhoneNumber] = useState(null);
   const [filter, setFilter] = useState("");
-  const [notificationMessage, setNotificationMessage] = useState(null);
-  const [notificationType, setNotificationType] = useState(null);
+  const [notification, setNotification] = useState(null);
 
-  useEffect(() => {
-    personService.getAll().then(response => setPersons(response));
-  }, [])
+  useEffect(() => personService.getAll().then(response => setPersons(response)), [])
 
   const handleFilterChange = (event) => setFilter(event.target.value.toLowerCase());
 
-  const handlePhoneNumberChange = (event) => setNewPhoneNumber(event.target.value);
+  const handlePersonSubmit = (newPerson) => {
+    if (isExistingPerson(newPerson.name) && hasConfirmedNumberUpdate(newPerson.name)) {
+      let person = persons.find(p => p.name === newPerson.name);
+      let personToUpdate = { ...person, number: newPerson.phone };
+      updatePerson(personToUpdate);
+    } else {
+      createPerson(newPerson);
+    }
+  };
 
-  const handleNameChange = (event) => setNewName(event.target.value);  
+  const createPerson = (newPerson) => {
+    personService.create(newPerson).then((response) => {
+      setPersons(persons.concat(response));
+      showPersonNotification(NotificationTypeEnum.Success, `Added ${response.name}`);
+    });
+  }
 
-  const addPerson = (event) => {
-    if (isExistingPerson(newName) && hasConfirmedNumberUpdate(newName)) {
-      let person = persons.find(p => p.name === newName);
-      let personToUpdate = { ...person, number: newPhoneNumber };
-      personService
+  const updatePerson = (personToUpdate) => {
+    personService
       .update(personToUpdate.id, personToUpdate)
       .then((updatedPerson) => {
         let updatedPersonList = persons.map(p => p.id === updatedPerson.id ? updatedPerson : p);
         setPersons(updatedPersonList);
-        showPersonNotification("success", `Updated ${updatedPerson.name}`);
+        showPersonNotification(NotificationTypeEnum.Success, `Updated ${updatedPerson.name}`);
       })
       .catch(error => {
         setPersons(persons.filter(p => p.id !== personToUpdate.id));
-        showPersonNotification("error", `Person '${personToUpdate.name}' was already removed from server`);
+        showPersonNotification(NotificationTypeEnum.Error, `Person '${personToUpdate.name}' was already removed from server`);
       });
-    } else {
-      let newPerson = { name: newName, number: newPhoneNumber };
-      personService.create(newPerson).then((response) => {
-        setPersons(persons.concat(response));
-        showPersonNotification("success", `Added ${response.name}`);
-      });
-    }
+  }
 
-    setNewName("");
-    setNewPhoneNumber("");
-  };
+  const deletePerson = (id) => {
+    personService
+        .remove(id)
+        .then(response => {
+          setPersons(persons.filter(n => n.id !== id));
+        });
+  }
 
   const showPersonNotification = (type, message) => {
-    setNotificationMessage(message);
-    setNotificationType(type);
+    setNotification({ message, type });
     setTimeout(() => {
-      setNotificationMessage(null);
-      setNotificationType(null);
+      setNotification(null);
     }, 5000);
   };
 
@@ -65,30 +67,20 @@ const App = () => {
 
   const onDelete = (person) => {
     if(window.confirm(`Delete ${person.name} ?`)){
-      personService
-        .remove(person.id)
-        .then(response => {
-          setPersons(persons.filter(n => n.id !== person.id));
-        });
+      deletePerson(person.id);
     }
   } 
 
   return (
     <>
       <h2>Phonebook</h2>
-      <Notification message={notificationMessage} type={notificationType} />
+      <Notification notification={notification} />
       <Filter 
         title={"filter shown with"} 
         onChange={handleFilterChange} 
       />
       <h2>Add a new</h2>
-      <PersonForm
-        onSubmit={addPerson}
-        newName={newName}
-        handleNameChange={handleNameChange}
-        newPhoneNumber={newPhoneNumber}
-        handlePhoneNumberChange={handlePhoneNumberChange}
-      />
+      <PersonForm onSubmit={handlePersonSubmit} />
       <h2>Numbers</h2>
       <PersonsDataTable
         persons={persons}
