@@ -18,7 +18,7 @@ const App = () => {
   const handlePersonSubmit = (newPerson) => {
     if (isExistingPerson(newPerson.name) && hasConfirmedNumberUpdate(newPerson.name)) {
       let person = persons.find(p => p.name === newPerson.name);
-      let personToUpdate = { ...person, number: newPerson.phone };
+      let personToUpdate = { ...person, number: newPerson.number };
       updatePerson(personToUpdate);
     } else {
       createPerson(newPerson);
