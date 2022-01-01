@@ -29,6 +29,10 @@ const App = () => {
     personService.create(newPerson).then((response) => {
       setPersons(persons.concat(response));
       showPersonNotification(NotificationTypeEnum.Success, `Added ${response.name}`);
+    })
+    .catch(error => {
+      showPersonNotification(NotificationTypeEnum.Error, error?.response?.data?.error);
+      console.log(error.response)
     });
   }
 
